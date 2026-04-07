@@ -234,9 +234,11 @@ export default function WallCalendar() {
           <div 
             className="absolute inset-0 z-0"
             style={{
-              background: `linear-gradient(135deg, hsl(${accent}), hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 20, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 15, 95)}%))`,
+              background: `radial-gradient(120% 80% at 15% 15%, hsl(${accent}) 0%, transparent 55%), radial-gradient(100% 90% at 85% 75%, hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 12, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 10, 95)}%) 0%, transparent 58%), linear-gradient(135deg, hsl(${accent}), hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 20, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 15, 95)}%))`,
             }}
           />
+
+          <div className="absolute inset-0 z-[12] bg-[radial-gradient(60%_45%_at_20%_20%,rgba(255,255,255,0.25),transparent_65%),radial-gradient(55%_40%_at_80%_85%,rgba(255,255,255,0.16),transparent_70%)] pointer-events-none" />
 
           <AnimatePresence mode="popLayout">
             <motion.img
@@ -258,11 +260,11 @@ export default function WallCalendar() {
           </AnimatePresence>
 
           {/* Premium Dark Gradient Overlay - Light top to darker bottom */}
-          <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/10 via-black/20 to-black/50" />
+          <div className="absolute inset-0 z-20 bg-gradient-to-b from-white/25 via-black/12 to-black/45 dark:from-black/10 dark:via-black/20 dark:to-black/50" />
           
           {/* Accent Color Enhancement - subtle glow */}
           <div 
-            className="absolute inset-0 z-15 opacity-25 pointer-events-none"
+            className="absolute inset-0 z-15 opacity-30 pointer-events-none mix-blend-soft-light"
             style={{
               background: `radial-gradient(ellipse at center, transparent 0%, hsl(${accent})/30 100%)`,
             }}
