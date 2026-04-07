@@ -27,8 +27,8 @@ export type NoteMode = "month" | "date" | "range";
 
 export function getCalendarDays(month: Date): Date[] {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
-  // Keep a stable 6-row calendar (42 cells) so month height never jumps.
-  const end = addDays(start, 41);
+  // Use a stable 5-row calendar (35 cells) to keep the layout compact and avoid vertical overflow.
+  const end = addDays(start, 34);
   return eachDayOfInterval({ start, end });
 }
 

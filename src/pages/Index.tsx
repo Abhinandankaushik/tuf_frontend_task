@@ -28,7 +28,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 pt-3 sm:pt-5 md:pt-8 w-full"
+          className="relative z-10 pt-1 sm:pt-2 md:pt-3 w-full"
         >
           <WallCalendar />
         </motion.div>

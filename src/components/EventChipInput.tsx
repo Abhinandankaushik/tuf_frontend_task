@@ -9,10 +9,9 @@ interface EventChipInputProps {
   events: CalendarEvent[];
   onAddEvent: (event: Omit<CalendarEvent, "id">) => void;
   onDeleteEvent: (id: string) => void;
-  compact?: boolean;
 }
 
-export default function EventChipInput({ selectedDate, events, onAddEvent, onDeleteEvent, compact = false }: EventChipInputProps) {
+export default function EventChipInput({ selectedDate, events, onAddEvent, onDeleteEvent }: EventChipInputProps) {
   const [title, setTitle] = useState("");
   const [colorIdx, setColorIdx] = useState(0);
   const [showForm, setShowForm] = useState(false);
@@ -34,8 +33,8 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`mt-1 border-t border-border/70 ${compact ? "pt-1" : "pt-1.5"}`}>
-      <div className={`sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 sm:py-2 flex items-center justify-between ${compact ? "mb-1" : "mb-1.5"}`}>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-1 border-t border-border/70 pt-1.5">
+      <div className="sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 sm:py-2 flex items-center justify-between mb-1.5">
         <span className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-wide">
           Events · {format(selectedDate, "MMM d")}
         </span>
@@ -50,7 +49,7 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
         </motion.button>
       </div>
 
-      <div className={`space-y-1.5 overflow-y-auto modern-scrollbar pr-1 ${compact ? "max-h-36 sm:max-h-40 mb-1" : "max-h-44 sm:max-h-56 mb-1.5"}`}>
+      <div className="space-y-1.5 overflow-y-auto modern-scrollbar pr-1 max-h-44 sm:max-h-56 mb-1.5">
         <AnimatePresence>
           {dateEvents.map((ev) => (
             <motion.div
@@ -100,7 +99,7 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
                     key={c.value}
                     onClick={() => setColorIdx(i)}
                     whileHover={{ scale: 1.03 }}
-                    className={`${compact ? "w-4 h-4" : "w-5 h-5"} rounded-full transition-all shrink-0`}
+                    className="w-5 h-5 rounded-full transition-all shrink-0"
                     style={{
                       backgroundColor: `hsl(${c.value})`,
                       boxShadow: colorIdx === i ? `0 0 0 1.5px hsl(var(--background)), 0 0 0 2.5px hsl(${c.value})` : "none",
@@ -110,7 +109,7 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
                 ))}
               </div>
             </div>
-            <div className={`flex gap-1.5 ${compact ? "flex-col" : "flex-col sm:flex-row"}`}>
+            <div className="flex gap-1.5 flex-col sm:flex-row">
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}

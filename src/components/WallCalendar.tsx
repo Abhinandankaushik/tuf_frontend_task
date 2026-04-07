@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, RotateCcw, Moon, Sun, PanelRightOpen, PanelRightClose, Minimize2, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, Moon, Sun, PanelRightOpen, PanelRightClose } from "lucide-react";
 import CalendarGrid from "./CalendarGrid";
 import CalendarNotes from "./CalendarNotes";
 import EventChipInput from "./EventChipInput";
@@ -11,7 +11,6 @@ import {
   format,
   addMonths,
   subMonths,
-  isSameDay,
   loadNotes,
   saveNotes,
   saveNoteForSelection,
@@ -32,6 +31,7 @@ export default function WallCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
+  const [isRangeMode, setIsRangeMode] = useState(false);
   const [notes, setNotes] = useState<CalendarNotesStore>(loadNotes);
   const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
@@ -41,7 +41,6 @@ export default function WallCalendar() {
   const [accent, setAccent] = useState(() => pickRandom(ALL_ACCENTS));
   const [imageRetry, setImageRetry] = useState(0);
   const [notesOpen, setNotesOpen] = useState(true);
-  const [notesCompact, setNotesCompact] = useState(false);
   const [sidePanelView, setSidePanelView] = useState<"notes" | "events">("notes");
   const [yearInput, setYearInput] = useState(() => String(new Date().getFullYear()));
 
@@ -82,6 +81,7 @@ export default function WallCalendar() {
     setCurrentMonth((m) => addMonths(m, 1));
     setImageRetry(0); // Reset retry for new image
     setHoveredDate(null);
+    setIsRangeMode(false);
   }, []);
 
   const goPrev = useCallback(() => {
@@ -89,6 +89,7 @@ export default function WallCalendar() {
     setCurrentMonth((m) => subMonths(m, 1));
     setImageRetry(0); // Reset retry for new image
     setHoveredDate(null);
+    setIsRangeMode(false);
   }, []);
 
   const goToday = useCallback(() => {
@@ -97,6 +98,7 @@ export default function WallCalendar() {
     setRange({ start: null, end: null });
     setImageRetry(0); // Reset retry counter for fresh image load
     setHoveredDate(null);
+    setIsRangeMode(false);
   }, []);
 
   const handleYearChange = useCallback((year: number) => {
@@ -126,34 +128,45 @@ export default function WallCalendar() {
     return Math.min(2100, Math.max(1900, year));
   }, []);
 
-  const handleSelectDay = useCallback((day: Date) => {
+  const handleSelectDay = useCallback((day: Date, isDoubleClick = false) => {
     setSelectedDate(day);
     setNotesOpen(true);
     setSidePanelView("notes");
-    setRange((prev) => {
-      if (!prev.start || (prev.start && prev.end)) {
-        setHoveredDate(null);
-        return { start: day, end: null };
-      }
-      if (isSameDay(day, prev.start)) {
-        setHoveredDate(null);
-        return { start: day, end: day };
-      }
+
+    // Single click = normal date selection, no range trigger.
+    if (!isDoubleClick && !isRangeMode) {
       setHoveredDate(null);
-      if (day < prev.start) {
-        return { start: day, end: prev.start };
-      }
-      return { start: prev.start, end: day };
-    });
-  }, []);
+      setRange({ start: day, end: null });
+      return;
+    }
+
+    // Double click = arm range mode with this date as start.
+    if (isDoubleClick && !isRangeMode) {
+      setRange({ start: day, end: null });
+      setHoveredDate(day);
+      setIsRangeMode(true);
+      return;
+    }
+
+    // If range mode is active, first next click finalizes the range.
+    if (isRangeMode) {
+      setRange((prev) => {
+        if (!prev.start) return { start: day, end: day };
+        if (day < prev.start) return { start: day, end: prev.start };
+        return { start: prev.start, end: day };
+      });
+      setHoveredDate(null);
+      setIsRangeMode(false);
+    }
+  }, [isRangeMode]);
 
   const handleHoverDay = useCallback((day: Date | null) => {
-    if (!range.start || range.end) {
+    if (!isRangeMode || !range.start || range.end) {
       if (day === null) setHoveredDate(null);
       return;
     }
     setHoveredDate(day);
-  }, [range.start, range.end]);
+  }, [isRangeMode, range.start, range.end]);
 
   const handleSaveSelectionNote = useCallback((mode: NoteMode, key: string, text: string) => {
     setNotes((prev) => {
@@ -204,12 +217,12 @@ export default function WallCalendar() {
     "h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-xl transition-all text-foreground/85 hover:text-foreground dark:text-white/85 dark:hover:text-white backdrop-blur-sm hover:backdrop-blur-md border border-black/10 dark:border-white/15 inline-flex items-center justify-center touch-target";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-3 lg:px-4 py-2 sm:py-4 md:py-5 overflow-hidden">
+    <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-3 lg:px-4 py-1 sm:py-2 md:py-3 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-card/40 backdrop-blur-xl rounded-3xl sm:rounded-4xl shadow-2xl overflow-hidden border border-white/10 dark:border-white/5 h-full flex flex-col"
+        className="bg-transparent backdrop-blur-xl rounded-3xl sm:rounded-4xl shadow-2xl overflow-hidden border border-white/10 dark:border-white/5 h-full flex flex-col"
       >
         {/* Premium Hero Image Section */}
         <div
@@ -403,20 +416,6 @@ export default function WallCalendar() {
             >
               {notesOpen ? <PanelRightClose className="w-4 h-4 sm:w-5 sm:h-5" /> : <PanelRightOpen className="w-4 h-4 sm:w-5 sm:h-5" />}
             </motion.button>
-
-            <motion.button
-              onClick={() => setNotesCompact((prev) => !prev)}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className={iconButtonClass}
-              style={{
-                backgroundColor: `hsl(${accent})/18`,
-              }}
-              title={notesCompact ? "Expand notes" : "Compact notes"}
-            >
-              {notesCompact ? <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />}
-            </motion.button>
           </div>
         </motion.div>
 
@@ -446,7 +445,7 @@ export default function WallCalendar() {
                 animate={{ opacity: 1, x: 0, height: "auto" }}
                 exit={{ opacity: 0, x: 24, height: 0 }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
-                className={`border-t lg:border-t-0 lg:border-l border-white/10 dark:border-white/5 px-2.5 sm:px-5 md:px-8 py-3 sm:py-5 md:py-6 bg-white/40 dark:bg-white/5 backdrop-blur-xl lg:overflow-y-auto modern-scrollbar min-h-0 overflow-x-visible w-full ${notesCompact ? "lg:w-72" : "lg:w-80"}`}
+                className="border-t lg:border-t-0 lg:border-l border-white/10 dark:border-white/5 px-2.5 sm:px-5 md:px-8 py-3 sm:py-5 md:py-6 bg-white/40 dark:bg-white/5 backdrop-blur-xl min-h-0 overflow-x-visible w-full lg:w-80"
               >
                 <div className="mb-3 p-1 rounded-xl border border-border/60 bg-background/55 backdrop-blur-sm inline-flex gap-1 w-full">
                   <button
@@ -469,7 +468,6 @@ export default function WallCalendar() {
                     range={range}
                     notes={notes}
                     onSaveNote={handleSaveSelectionNote}
-                    compact={notesCompact}
                   />
                 ) : (
                   <EventChipInput
@@ -477,7 +475,6 @@ export default function WallCalendar() {
                     events={events}
                     onAddEvent={handleAddEvent}
                     onDeleteEvent={handleDeleteEvent}
-                    compact={notesCompact}
                   />
                 )}
               </motion.div>

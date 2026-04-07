@@ -16,7 +16,6 @@ interface CalendarNotesProps {
   range: DateRange;
   notes: CalendarNotesStore;
   onSaveNote: (mode: NoteMode, key: string, text: string) => void;
-  compact?: boolean;
 }
 
 interface NoteItem {
@@ -24,7 +23,7 @@ interface NoteItem {
   color: string;
 }
 
-export default function CalendarNotes({ currentMonth, range, notes, onSaveNote, compact = false }: CalendarNotesProps) {
+export default function CalendarNotes({ currentMonth, range, notes, onSaveNote }: CalendarNotesProps) {
   const selection = useMemo(
     () => getNoteForSelection(notes, currentMonth, range),
     [notes, currentMonth, range],
@@ -78,33 +77,16 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote, 
     setShowForm(false);
   };
 
-  const handleClear = () => {
-    onSaveNote(selection.mode, selection.key, "");
-    setDraft("");
-    setShowForm(false);
-  };
-
   const handleDeleteNoteAt = (index: number) => {
     const next = savedNotes.filter((_, i) => i !== index);
     onSaveNote(selection.mode, selection.key, next.length ? JSON.stringify(next) : "");
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`mt-1 border-t border-border/70 ${compact ? "pt-1" : "pt-1.5"}`}>
-      <div className={`sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 sm:py-2 flex items-center justify-between ${compact ? "mb-1" : "mb-1.5"}`}>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-1 border-t border-border/70 pt-1.5">
+      <div className="sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 sm:py-2 flex items-center justify-between mb-1.5">
         <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate pr-2">{title}</h3>
         <div className="flex items-center gap-1">
-          {savedNotes.length > 0 && (
-            <motion.button
-              onClick={handleClear}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-2.5 py-1.5 rounded-lg border border-border/70 bg-secondary/60 text-[11px] font-semibold text-foreground hover:bg-secondary transition-colors"
-              title="Clear all notes"
-            >
-              Clear All
-            </motion.button>
-          )}
           <motion.button
             onClick={() => setShowForm((prev) => !prev)}
             whileHover={{ scale: 1.1 }}
@@ -117,7 +99,7 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote, 
         </div>
       </div>
 
-      <div className={`space-y-1.5 overflow-y-auto modern-scrollbar pr-1 ${compact ? "max-h-36 sm:max-h-40 mb-1" : "max-h-44 sm:max-h-56 mb-1.5"}`}>
+      <div className="space-y-1.5 overflow-y-auto modern-scrollbar pr-1 max-h-44 sm:max-h-56 mb-1.5">
         {savedNotes.length === 0 && !showForm && (
           <p className="text-xs text-muted-foreground italic">No notes for this selection.</p>
         )}
@@ -162,7 +144,7 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote, 
                       key={c.value}
                       onClick={() => setColorIdx(i)}
                       whileHover={{ scale: 1.03 }}
-                      className={`${compact ? "w-4 h-4" : "w-5 h-5"} rounded-full transition-all shrink-0`}
+                      className="w-5 h-5 rounded-full transition-all shrink-0"
                       style={{
                         backgroundColor: `hsl(${c.value})`,
                         boxShadow: colorIdx === i ? `0 0 0 1.5px hsl(var(--background)), 0 0 0 2.5px hsl(${c.value})` : "none",
@@ -172,7 +154,7 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote, 
                   ))}
                 </div>
               </div>
-              <div className={`flex gap-1.5 ${compact ? "flex-col" : "flex-col sm:flex-row"}`}>
+              <div className="flex gap-1.5 flex-col sm:flex-row">
                 <input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}

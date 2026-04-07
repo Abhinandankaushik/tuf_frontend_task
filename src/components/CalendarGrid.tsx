@@ -14,7 +14,7 @@ interface CalendarGridProps {
   range: DateRange;
   notes: CalendarNotesStore;
   events: CalendarEvent[];
-  onSelectDay: (day: Date) => void;
+  onSelectDay: (day: Date, isDoubleClick?: boolean) => void;
   hoveredDate: Date | null;
   onHoverDay: (day: Date | null) => void;
   direction: number;
@@ -138,6 +138,7 @@ export default function CalendarGrid({ currentMonth, range, notes, events, onSel
                   delay: 0.06 + idx * 0.008,
                 }}
                 style={{ transformStyle: "preserve-3d" }}
+                className="w-full"
               >
                 <CalendarDay
                   day={day}

@@ -25,7 +25,7 @@ interface CalendarDayProps {
   hoveredDate: Date | null;
   notes: CalendarNotesStore;
   events: CalendarEvent[];
-  onSelect: (day: Date) => void;
+  onSelect: (day: Date, isDoubleClick?: boolean) => void;
   onHover: (day: Date | null) => void;
   accent: string;
 }
@@ -57,13 +57,13 @@ export default function CalendarDay({ day, currentMonth, range, hoveredDate, not
       whileTap={sameMonth ? { scale: 0.92 } : {}}
     >
       <motion.button
-        onClick={() => sameMonth && onSelect(day)}
+        onClick={(e) => sameMonth && onSelect(day, e.detail >= 2)}
         onMouseEnter={() => sameMonth && onHover(day)}
         onFocus={() => sameMonth && onHover(day)}
         onMouseLeave={() => onHover(null)}
         onBlur={() => onHover(null)}
         className={cn(
-          "relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 aspect-square min-h-[2.9rem] sm:min-h-[3.6rem] transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden backdrop-blur-sm border",
+          "relative w-full h-[clamp(2.4rem,8.2vw,3.9rem)] sm:h-[clamp(2.9rem,7.2vw,4.4rem)] md:h-[clamp(3.2rem,6.2vw,4.8rem)] flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden backdrop-blur-sm border",
           !sameMonth && "text-muted-foreground/45 cursor-default border-transparent",
           sameMonth && !inRange && !today && "text-foreground border-border/60 bg-background/45 hover:shadow-md hover:border-primary/35 hover:bg-background/70",
           today && !inRange && "font-bold text-white shadow-lg border-primary/40",
