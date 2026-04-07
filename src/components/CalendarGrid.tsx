@@ -3,7 +3,7 @@ import CalendarDay from "./CalendarDay";
 import {
   getCalendarDays,
   type DateRange,
-  type CalendarNote,
+  type CalendarNotesStore,
 } from "@/lib/calendar-utils";
 import type { CalendarEvent } from "@/lib/events";
 
@@ -12,14 +12,16 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 interface CalendarGridProps {
   currentMonth: Date;
   range: DateRange;
-  notes: CalendarNote[];
+  notes: CalendarNotesStore;
   events: CalendarEvent[];
   onSelectDay: (day: Date) => void;
+  hoveredDate: Date | null;
+  onHoverDay: (day: Date | null) => void;
   direction: number;
   accent: string;
 }
 
-export default function CalendarGrid({ currentMonth, range, notes, events, onSelectDay, direction, accent }: CalendarGridProps) {
+export default function CalendarGrid({ currentMonth, range, notes, events, onSelectDay, hoveredDate, onHoverDay, direction, accent }: CalendarGridProps) {
   const days = getCalendarDays(currentMonth);
   const flipFromRight = direction >= 0;
 
@@ -141,9 +143,11 @@ export default function CalendarGrid({ currentMonth, range, notes, events, onSel
                   day={day}
                   currentMonth={currentMonth}
                   range={range}
+                  hoveredDate={hoveredDate}
                   notes={notes}
                   events={events}
                   onSelect={onSelectDay}
+                  onHover={onHoverDay}
                   accent={accent}
                 />
               </motion.div>

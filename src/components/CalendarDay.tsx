@@ -4,11 +4,16 @@ import {
   isSameMonth,
   isToday,
   isInRange,
-  isRangeStart,
-  isRangeEnd,
+  isSameDay,
+  isStart,
+  isEnd,
+  isInPreviewRange,
   format,
+  getDateKey,
+  hasDateNoteForDate,
+  hasRangeNoteForDate,
   type DateRange,
-  type CalendarNote,
+  type CalendarNotesStore,
 } from "@/lib/calendar-utils";
 import { getHoliday } from "@/lib/holidays";
 import { getEventsForDate, type CalendarEvent } from "@/lib/events";
@@ -17,25 +22,27 @@ interface CalendarDayProps {
   day: Date;
   currentMonth: Date;
   range: DateRange;
-  notes: CalendarNote[];
+  hoveredDate: Date | null;
+  notes: CalendarNotesStore;
   events: CalendarEvent[];
   onSelect: (day: Date) => void;
+  onHover: (day: Date | null) => void;
   accent: string;
 }
 
-export default function CalendarDay({ day, currentMonth, range, notes, events, onSelect, accent }: CalendarDayProps) {
+export default function CalendarDay({ day, currentMonth, range, hoveredDate, notes, events, onSelect, onHover, accent }: CalendarDayProps) {
   const sameMonth = isSameMonth(day, currentMonth);
   const today = isToday(day);
   const inRange = isInRange(day, range);
-  const rangeStart = isRangeStart(day, range);
-  const rangeEnd = isRangeEnd(day, range);
+  const rangeStart = isStart(day, range);
+  const rangeEnd = isEnd(day, range);
+  const previewRange = !range.end && isInPreviewRange(day, range.start, hoveredDate);
   const holiday = getHoliday(day);
-  const dateStr = format(day, "yyyy-MM-dd");
-  const dayNotes = notes.filter((n) => n.date === dateStr);
+  const dateStr = getDateKey(day);
   const dayEvents = getEventsForDate(events, dateStr);
-  const hasNotes = dayNotes.length > 0;
+  const hasNotes = hasDateNoteForDate(notes, day) || hasRangeNoteForDate(notes, day);
 
-  const isSpecial = today || rangeStart || rangeEnd;
+  const isSpecial = today || rangeStart || rangeEnd || previewRange;
 
   return (
     <motion.div
@@ -51,13 +58,20 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
     >
       <motion.button
         onClick={() => sameMonth && onSelect(day)}
+        onMouseEnter={() => sameMonth && onHover(day)}
+        onFocus={() => sameMonth && onHover(day)}
+        onMouseLeave={() => onHover(null)}
+        onBlur={() => onHover(null)}
         className={cn(
           "relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 aspect-square min-h-[2.9rem] sm:min-h-[3.6rem] transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden backdrop-blur-sm border",
           !sameMonth && "text-muted-foreground/45 cursor-default border-transparent",
           sameMonth && !inRange && !today && "text-foreground border-border/60 bg-background/45 hover:shadow-md hover:border-primary/35 hover:bg-background/70",
           today && !inRange && "font-bold text-white shadow-lg border-primary/40",
           inRange && !rangeStart && !rangeEnd && "bg-white/30 dark:bg-white/10 text-foreground border-primary/25 backdrop-blur-sm",
+          previewRange && !inRange && !rangeStart && !rangeEnd && "bg-primary/10 border-primary/20",
           (rangeStart || rangeEnd) && "text-white shadow-xl font-semibold",
+          rangeStart && range.end && !isSameDay(range.start as Date, range.end as Date) && "rounded-r-md sm:rounded-r-lg",
+          rangeEnd && range.start && !isSameDay(range.start as Date, range.end as Date) && "rounded-l-md sm:rounded-l-lg",
         )}
         layout
         style={

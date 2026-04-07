@@ -14,8 +14,10 @@ import {
   isSameDay,
   loadNotes,
   saveNotes,
+  saveNoteForSelection,
   type DateRange,
-  type CalendarNote,
+  type CalendarNotesStore,
+  type NoteMode,
 } from "@/lib/calendar-utils";
 
 const ALL_IMAGES = THEMES.flatMap((t) => t.images);
@@ -30,8 +32,9 @@ export default function WallCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
-  const [notes, setNotes] = useState<CalendarNote[]>(loadNotes);
+  const [notes, setNotes] = useState<CalendarNotesStore>(loadNotes);
   const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [direction, setDirection] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [heroImage, setHeroImage] = useState(() => pickRandom(ALL_IMAGES));
@@ -78,12 +81,14 @@ export default function WallCalendar() {
     setDirection(1);
     setCurrentMonth((m) => addMonths(m, 1));
     setImageRetry(0); // Reset retry for new image
+    setHoveredDate(null);
   }, []);
 
   const goPrev = useCallback(() => {
     setDirection(-1);
     setCurrentMonth((m) => subMonths(m, 1));
     setImageRetry(0); // Reset retry for new image
+    setHoveredDate(null);
   }, []);
 
   const goToday = useCallback(() => {
@@ -91,6 +96,7 @@ export default function WallCalendar() {
     setCurrentMonth(new Date());
     setRange({ start: null, end: null });
     setImageRetry(0); // Reset retry counter for fresh image load
+    setHoveredDate(null);
   }, []);
 
   const handleYearChange = useCallback((year: number) => {
@@ -123,30 +129,35 @@ export default function WallCalendar() {
   const handleSelectDay = useCallback((day: Date) => {
     setSelectedDate(day);
     setNotesOpen(true);
-    setSidePanelView("events");
+    setSidePanelView("notes");
     setRange((prev) => {
       if (!prev.start || (prev.start && prev.end)) {
+        setHoveredDate(null);
         return { start: day, end: null };
       }
       if (isSameDay(day, prev.start)) {
+        setHoveredDate(null);
         return { start: day, end: day };
+      }
+      setHoveredDate(null);
+      if (day < prev.start) {
+        return { start: day, end: prev.start };
       }
       return { start: prev.start, end: day };
     });
   }, []);
 
-  const handleAddNote = useCallback((note: Omit<CalendarNote, "id">) => {
-    const newNote: CalendarNote = { ...note, id: crypto.randomUUID() };
-    setNotes((prev) => {
-      const updated = [...prev, newNote];
-      saveNotes(updated);
-      return updated;
-    });
-  }, []);
+  const handleHoverDay = useCallback((day: Date | null) => {
+    if (!range.start || range.end) {
+      if (day === null) setHoveredDate(null);
+      return;
+    }
+    setHoveredDate(day);
+  }, [range.start, range.end]);
 
-  const handleDeleteNote = useCallback((id: string) => {
+  const handleSaveSelectionNote = useCallback((mode: NoteMode, key: string, text: string) => {
     setNotes((prev) => {
-      const updated = prev.filter((n) => n.id !== id);
+      const updated = saveNoteForSelection(prev, mode, key, text);
       saveNotes(updated);
       return updated;
     });
@@ -419,6 +430,8 @@ export default function WallCalendar() {
               notes={notes}
               events={events}
               onSelectDay={handleSelectDay}
+              hoveredDate={hoveredDate}
+              onHoverDay={handleHoverDay}
               direction={direction}
               accent={accent}
             />
@@ -452,10 +465,10 @@ export default function WallCalendar() {
 
                 {sidePanelView === "notes" ? (
                   <CalendarNotes
+                    currentMonth={currentMonth}
                     range={range}
                     notes={notes}
-                    onAddNote={handleAddNote}
-                    onDeleteNote={handleDeleteNote}
+                    onSaveNote={handleSaveSelectionNote}
                     compact={notesCompact}
                   />
                 ) : (
