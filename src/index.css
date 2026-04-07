@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap');
+
+/* tailwind layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* theme variables */
+@layer base {
+  :root {
+    /* base colors */
+    --background: 40 33% 96%;
+    --foreground: 20 10% 15%;
+
+    /* cards */
+    --card: 40 30% 98%;
+    --card-foreground: 20 10% 15%;
+
+    /* popover */
+    --popover: 40 30% 98%;
+    --popover-foreground: 20 10% 15%;
+
+    /* primary */
+    --primary: 16 60% 48%;
+    --primary-foreground: 40 33% 98%;
+
+    /* secondary */
+    --secondary: 40 20% 90%;
+    --secondary-foreground: 20 10% 25%;
+
+    /* muted */
+    --muted: 40 15% 92%;
+    --muted-foreground: 20 8% 52%;
+
+    /* accent */
+    --accent: 16 45% 55%;
+    --accent-foreground: 40 33% 98%;
+
+    /* danger */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* ui stuff */
+    --border: 30 15% 85%;
+    --input: 30 15% 85%;
+    --ring: 16 60% 48%;
+
+    --radius: 0.5rem;
+
+    /* calendar specific (might tweak later) */
+    --calendar-range: 16 60% 48%;
+    --calendar-range-bg: 16 40% 94%;
+    --calendar-today: 200 60% 50%;
+    --calendar-outside: 20 5% 70%;
+    --calendar-hover: 40 25% 92%;
+    --calendar-note: 45 80% 55%;
+
+    /* fonts */
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Source Sans 3', system-ui, sans-serif;
+
+    /* shadows */
+    --shadow-calendar: 0 4px 24px -4px hsl(20 10% 15% / 0.08),
+                       0 12px 48px -8px hsl(20 10% 15% / 0.06);
+
+    --shadow-day: 0 2px 8px -2px hsl(16 60% 48% / 0.25);
+  }
+}
+
+/* base styles */
+@layer base {
+  * {
+    @apply border-border; /* apply border color everywhere */
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    /* might change later depending on design */
+  }
+
+  /* headings use display font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+/* Custom animations */
+@layer utilities {
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(var(--primary), 0.5); }
+    50% { box-shadow: 0 0 40px rgba(var(--primary), 0.8); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes pulse-smooth {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes bounce-smooth {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s linear infinite;
+  }
+
+  .animate-pulse-smooth {
+    animation: pulse-smooth 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-smooth {
+    animation: bounce-smooth 2s ease-in-out infinite;
+  }
+}
