@@ -21,9 +21,10 @@ interface CalendarGridProps {
 
 export default function CalendarGrid({ currentMonth, range, notes, events, onSelectDay, direction, accent }: CalendarGridProps) {
   const days = getCalendarDays(currentMonth);
+  const flipFromRight = direction >= 0;
 
   return (
-    <div className="w-full" style={{ perspective: "1200px" }}>
+    <div className="w-full" style={{ perspective: "1800px" }}>
       {/* Weekday headers with bounce animation */}
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3 md:mb-4">
         {WEEKDAYS.map((wd, idx) => (
@@ -45,57 +46,109 @@ export default function CalendarGrid({ currentMonth, range, notes, events, onSel
         <motion.div
           key={currentMonth.toISOString()}
           initial={{
-            rotateY: direction * 90,
+            rotateY: flipFromRight ? -72 : 72,
+            x: flipFromRight ? 26 : -26,
+            scale: 0.97,
             opacity: 0,
-            filter: "blur(10px)",
+            filter: "blur(6px)",
           }}
           animate={{
             rotateY: 0,
+            x: 0,
+            scale: 1,
             opacity: 1,
             filter: "blur(0px)",
           }}
           exit={{
-            rotateY: direction * -90,
+            rotateY: flipFromRight ? 72 : -72,
+            x: flipFromRight ? -26 : 26,
+            scale: 0.97,
             opacity: 0,
-            filter: "blur(10px)",
+            filter: "blur(6px)",
           }}
           transition={{
-            duration: 0.6,
-            ease: [0.34, 1.56, 0.64, 1],
-            type: "spring",
-            stiffness: 300,
-            damping: 30,
+            duration: 0.74,
+            ease: [0.2, 0.8, 0.2, 1],
           }}
           style={{
             transformStyle: "preserve-3d",
+            transformOrigin: flipFromRight ? "left center" : "right center",
             backfaceVisibility: "hidden",
           }}
-          className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2"
+          className="relative"
         >
-          {days.map((day, idx) => (
-            <motion.div
-              key={day.toISOString()}
-              initial={{ opacity: 0, scale: 0.8, rotateX: -90 }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                delay: idx * 0.02,
-              }}
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              <CalendarDay
-                day={day}
-                currentMonth={currentMonth}
-                range={range}
-                notes={notes}
-                events={events}
-                onSelect={onSelectDay}
-                accent={accent}
-              />
-            </motion.div>
-          ))}
+          <motion.div
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            initial={{ opacity: 0.38 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0.34 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              background: flipFromRight
+                ? "linear-gradient(90deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 42%)"
+                : "linear-gradient(270deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 42%)",
+            }}
+          />
+
+          {/* Paper-curl edge highlight for a realistic page-turn feel */}
+          <motion.div
+            className="pointer-events-none absolute top-0 bottom-0 z-20"
+            initial={{ opacity: 0.85, scaleX: 0.65, x: flipFromRight ? -6 : 6 }}
+            animate={{ opacity: 0.08, scaleX: 1, x: 0 }}
+            exit={{ opacity: 0.72, scaleX: 0.6, x: flipFromRight ? 6 : -6 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{
+              width: "14px",
+              left: flipFromRight ? "0" : "auto",
+              right: flipFromRight ? "auto" : "0",
+              background: flipFromRight
+                ? "linear-gradient(90deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.45) 42%, rgba(255,255,255,0) 100%)"
+                : "linear-gradient(270deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.45) 42%, rgba(255,255,255,0) 100%)",
+              filter: "blur(0.2px)",
+            }}
+          />
+
+          <motion.div
+            className="pointer-events-none absolute top-0 bottom-0 z-10"
+            initial={{ opacity: 0.7, x: flipFromRight ? -8 : 8 }}
+            animate={{ opacity: 0.04, x: 0 }}
+            exit={{ opacity: 0.62, x: flipFromRight ? 8 : -8 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{
+              width: "30px",
+              left: flipFromRight ? "0" : "auto",
+              right: flipFromRight ? "auto" : "0",
+              background: flipFromRight
+                ? "linear-gradient(90deg, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.12) 38%, rgba(0,0,0,0) 100%)"
+                : "linear-gradient(270deg, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.12) 38%, rgba(0,0,0,0) 100%)",
+            }}
+          />
+
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2">
+            {days.map((day, idx) => (
+              <motion.div
+                key={day.toISOString()}
+                initial={{ opacity: 0, scale: 0.9, rotateX: -24 }}
+                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                transition={{
+                  duration: 0.35,
+                  ease: "easeOut",
+                  delay: 0.06 + idx * 0.008,
+                }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <CalendarDay
+                  day={day}
+                  currentMonth={currentMonth}
+                  range={range}
+                  notes={notes}
+                  events={events}
+                  onSelect={onSelectDay}
+                  accent={accent}
+                />
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       </AnimatePresence>
     </div>

@@ -40,6 +40,7 @@ export default function WallCalendar() {
   const [notesOpen, setNotesOpen] = useState(true);
   const [notesCompact, setNotesCompact] = useState(false);
   const [sidePanelView, setSidePanelView] = useState<"notes" | "events">("notes");
+  const [yearInput, setYearInput] = useState(() => String(new Date().getFullYear()));
 
   // Pick a new random hero image + accent whenever month changes.
   useEffect(() => {
@@ -91,6 +92,29 @@ export default function WallCalendar() {
     setRange({ start: null, end: null });
     setImageRetry(0); // Reset retry counter for fresh image load
   }, []);
+
+  const handleYearChange = useCallback((year: number) => {
+    setDirection(0);
+    setCurrentMonth((m) => {
+      const next = new Date(m);
+      next.setFullYear(year);
+      return next;
+    });
+    setImageRetry(0);
+  }, []);
+
+  useEffect(() => {
+    setYearInput(String(currentMonth.getFullYear()));
+  }, [currentMonth]);
+
+  const applyYearInput = useCallback(() => {
+    const parsedYear = Number(yearInput);
+    if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2100) {
+      setYearInput(String(currentMonth.getFullYear()));
+      return;
+    }
+    handleYearChange(parsedYear);
+  }, [currentMonth, handleYearChange, yearInput]);
 
   const handleSelectDay = useCallback((day: Date) => {
     setSelectedDate(day);
@@ -296,6 +320,35 @@ export default function WallCalendar() {
             >
               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </motion.button>
+          </div>
+
+          <div className="w-full sm:w-auto flex items-center justify-center">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-black/10 dark:border-white/15 bg-gradient-to-br from-white/80 to-white/55 dark:from-white/10 dark:to-white/5 px-2.5 sm:px-3 py-1.5 shadow-lg shadow-black/5 dark:shadow-black/25 backdrop-blur-md">
+              <label htmlFor="calendar-year-input" className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-[0.12em]">
+                Jump Year
+              </label>
+              <input
+                id="calendar-year-input"
+                type="number"
+                inputMode="numeric"
+                min={1900}
+                max={2100}
+                value={yearInput}
+                onChange={(e) => setYearInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyYearInput();
+                }}
+                className="h-8 sm:h-9 w-20 sm:w-24 rounded-xl border border-black/10 dark:border-white/15 bg-background/80 px-2.5 text-xs sm:text-sm font-semibold text-foreground shadow-inner shadow-black/5 dark:shadow-black/30 focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Enter calendar year"
+              />
+              <button
+                onClick={applyYearInput}
+                className="h-8 sm:h-9 px-3 sm:px-3.5 rounded-xl bg-primary text-primary-foreground text-[11px] sm:text-xs font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35"
+                title="Apply year"
+              >
+                Go
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">

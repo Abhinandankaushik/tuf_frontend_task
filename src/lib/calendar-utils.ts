@@ -1,8 +1,7 @@
 import {
   startOfMonth,
-  endOfMonth,
   startOfWeek,
-  endOfWeek,
+  addDays,
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
@@ -27,7 +26,8 @@ export interface CalendarNote {
 
 export function getCalendarDays(month: Date): Date[] {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
-  const end = endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
+  // Keep a stable 6-row calendar (42 cells) so month height never jumps.
+  const end = addDays(start, 41);
   return eachDayOfInterval({ start, end });
 }
 
