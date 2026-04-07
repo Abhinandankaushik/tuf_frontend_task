@@ -1,14 +1,12 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, Moon, Sun, PanelRightOpen, PanelRightClose, Minimize2, Maximize2 } from "lucide-react";
 import CalendarGrid from "./CalendarGrid";
 import CalendarNotes from "./CalendarNotes";
-import MonthMemo from "./MonthMemo";
 import EventChipInput from "./EventChipInput";
-import ThemeSwitcher from "./ThemeSwitcher";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getMonthImage, getMonthAccent } from "@/lib/themes";
-import { loadEvents, saveEvents, type CalendarEvent } from "@/lib/events";
+import { THEMES } from "@/lib/themes";
+import { fetchEventsForMonth, loadEvents, mergeUniqueEvents, saveEvents, type CalendarEvent } from "@/lib/events";
 import {
   format,
   addMonths,
@@ -20,40 +18,84 @@ import {
   type CalendarNote,
 } from "@/lib/calendar-utils";
 
+const ALL_IMAGES = THEMES.flatMap((t) => t.images);
+const ALL_ACCENTS = THEMES.flatMap((t) => t.accents);
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
 export default function WallCalendar() {
-  const { theme, setMonthAccent } = useTheme();
+  const { isDark, toggleDark } = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
   const [notes, setNotes] = useState<CalendarNote[]>(loadNotes);
   const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
   const [direction, setDirection] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const [heroImage, setHeroImage] = useState(() => pickRandom(ALL_IMAGES));
+  const [accent, setAccent] = useState(() => pickRandom(ALL_ACCENTS));
+  const [imageRetry, setImageRetry] = useState(0);
+  const [notesOpen, setNotesOpen] = useState(true);
+  const [notesCompact, setNotesCompact] = useState(false);
+  const [sidePanelView, setSidePanelView] = useState<"notes" | "events">("notes");
 
-  const heroImage = useMemo(() => getMonthImage(theme, currentMonth.getMonth()), [theme, currentMonth]);
-  const accent = useMemo(() => getMonthAccent(theme, currentMonth.getMonth()), [theme, currentMonth]);
-
-  // Update accent color when month/theme changes
+  // Pick a new random hero image + accent whenever month changes.
   useEffect(() => {
-    setMonthAccent(accent);
-  }, [accent, setMonthAccent]);
+    setHeroImage(pickRandom(ALL_IMAGES));
+    setAccent(pickRandom(ALL_ACCENTS));
+    setImageRetry(0);
+
+    // Keep notes panel visible on desktop when changing months.
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setNotesOpen(true);
+    }
+  }, [currentMonth]);
+
+  // Fetch current-month events, cache in localStorage, and keep unique event list.
+  useEffect(() => {
+    let active = true;
+    const loadMonthEvents = async () => {
+      const monthEvents = await fetchEventsForMonth(currentMonth);
+      if (!active) return;
+
+      setEvents((prev) => {
+        const merged = mergeUniqueEvents(prev, monthEvents);
+        saveEvents(merged);
+        return merged;
+      });
+    };
+
+    loadMonthEvents();
+    return () => {
+      active = false;
+    };
+  }, [currentMonth]);
 
   const goNext = useCallback(() => {
     setDirection(1);
     setCurrentMonth((m) => addMonths(m, 1));
+    setImageRetry(0); // Reset retry for new image
   }, []);
 
   const goPrev = useCallback(() => {
     setDirection(-1);
     setCurrentMonth((m) => subMonths(m, 1));
+    setImageRetry(0); // Reset retry for new image
   }, []);
 
   const goToday = useCallback(() => {
     setDirection(0);
     setCurrentMonth(new Date());
     setRange({ start: null, end: null });
+    setImageRetry(0); // Reset retry counter for fresh image load
   }, []);
 
   const handleSelectDay = useCallback((day: Date) => {
+    setSelectedDate(day);
+    setNotesOpen(true);
+    setSidePanelView("events");
     setRange((prev) => {
       if (!prev.start || (prev.start && prev.end)) {
         return { start: day, end: null };
@@ -107,50 +149,98 @@ export default function WallCalendar() {
     });
   }, []);
 
+  const handleImageLoad = useCallback(() => {
+    setImageRetry(0);
+  }, []);
+
+  const handleImageError = useCallback(() => {
+    if (imageRetry < 2) {
+      setTimeout(() => {
+        setImageRetry((prev) => prev + 1);
+      }, 800);
+    }
+  }, [imageRetry]);
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:py-10">
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-5 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-card rounded-2xl shadow-calendar overflow-hidden border border-border"
+        className="bg-card/40 backdrop-blur-xl rounded-3xl sm:rounded-4xl shadow-2xl overflow-hidden border border-white/10 dark:border-white/5 h-full flex flex-col"
       >
-        {/* Hero Image with parallax mood */}
+        {/* Premium Hero Image Section */}
         <div
-          className="relative overflow-hidden cursor-crosshair"
+          className="relative overflow-hidden w-full h-48 sm:h-56 md:h-64 lg:h-72 group cursor-crosshair"
           onMouseMove={handleHeroMouseMove}
           onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
         >
-          <AnimatePresence mode="wait">
+          {/* Fallback gradient layer - themed accent */}
+          <div 
+            className="absolute inset-0 z-0"
+            style={{
+              background: `linear-gradient(135deg, hsl(${accent}), hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 20, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 15, 95)}%))`,
+            }}
+          />
+
+          <AnimatePresence mode="popLayout">
             <motion.img
-              key={heroImage}
+              key={`${heroImage}-${imageRetry}`}
               src={heroImage}
               alt={format(currentMonth, "MMMM yyyy")}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.5 }}
-              className="w-full h-48 sm:h-64 lg:h-80 object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="w-full h-full object-cover relative z-10"
               style={{
                 transform: `scale(1.05) translate(${(mousePos.x - 0.5) * -12}px, ${(mousePos.y - 0.5) * -8}px)`,
                 transition: "transform 0.3s ease-out",
               }}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
           </AnimatePresence>
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card/60 via-transparent to-transparent" />
+          {/* Premium Dark Gradient Overlay - Light top to darker bottom */}
+          <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/10 via-black/20 to-black/50" />
+          
+          {/* Accent Color Enhancement - subtle glow */}
+          <div 
+            className="absolute inset-0 z-15 opacity-25 pointer-events-none"
+            style={{
+              background: `radial-gradient(ellipse at center, transparent 0%, hsl(${accent})/30 100%)`,
+            }}
+          />
 
-          {/* Theme mood label */}
-          <div className="absolute top-4 left-4 bg-foreground/50 backdrop-blur-sm text-primary-foreground px-3 py-1 rounded-full text-xs font-body font-medium flex items-center gap-1.5">
-            <span>{theme.emoji}</span>
-            <span className="capitalize">{theme.mood}</span>
-          </div>
+          {/* Month & Year Information - overlaid on image */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 z-30 bg-gradient-to-t from-black/70 via-black/40 to-transparent"
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-display">
+              {format(currentMonth, "MMMM")}
+            </h2>
+            <p className="text-xs sm:text-sm text-white/70 mt-1 font-body">
+              {format(currentMonth, "EEEE, d MMM")}
+            </p>
+          </motion.div>
 
-          {/* Year overlay */}
-          <div className="absolute top-4 right-4 bg-foreground/50 backdrop-blur-sm text-primary-foreground px-3 py-1 rounded-full text-sm font-display font-semibold">
+          {/* Year Badge with accent color */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="absolute top-4 right-4 z-30 px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold text-white backdrop-blur-sm border"
+            style={{
+              backgroundColor: `hsl(${accent})/70`,
+              borderColor: `hsl(${accent})/90`,
+            }}
+          >
             {format(currentMonth, "yyyy")}
-          </div>
+          </motion.div>
         </div>
 
         {/* Header */}
@@ -158,79 +248,100 @@ export default function WallCalendar() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex items-center justify-between px-4 sm:px-8 py-6 border-b border-border/50 bg-gradient-to-r from-transparent via-primary/5 to-transparent"
+          className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-white/5 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-sm"
         >
           {/* Navigation buttons */}
           <div className="flex items-center gap-2">
             <motion.button
               onClick={goPrev}
-              whileHover={{ scale: 1.15, backgroundColor: "var(--secondary)" }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="p-2.5 rounded-full hover:bg-secondary transition-colors text-foreground backdrop-blur-sm bg-secondary/30"
+              className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground/80 hover:text-foreground dark:text-white/80 dark:hover:text-white backdrop-blur-sm hover:backdrop-blur-md border border-black/10 dark:border-white/15"
+              style={{
+                backgroundColor: `hsl(${accent})/15`,
+              }}
               title="Previous month"
             >
-              <motion.div animate={{ x: [0, -2, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
-                <ChevronLeft className="w-5 h-5" />
-              </motion.div>
+              <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
             </motion.button>
-          </div>
 
-          {/* Month title with animation */}
-          <motion.div
-            key={currentMonth.toISOString()}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="text-center flex-1"
-          >
-            <motion.h1
-              className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent"
-              animate={{ scale: [0.95, 1] }}
-              transition={{ duration: 0.4 }}
-            >
-              {format(currentMonth, "MMMM")}
-            </motion.h1>
-            <motion.p className="text-sm text-muted-foreground mt-1 font-body">
-              {format(currentMonth, "EEEE, d MMMM yyyy")}
-            </motion.p>
-          </motion.div>
-
-          {/* Right navigation */}
-          <div className="flex items-center gap-1.5">
             <motion.button
               onClick={goToday}
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="p-2.5 rounded-full hover:bg-secondary transition-colors text-muted-foreground backdrop-blur-sm bg-secondary/30"
+              className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground/80 hover:text-foreground dark:text-white/80 dark:hover:text-white backdrop-blur-sm hover:backdrop-blur-md border border-black/10 dark:border-white/15"
+              style={{
+                backgroundColor: `hsl(${accent})/15`,
+              }}
               title="Go to today"
             >
-              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8 }}>
-                <RotateCcw className="w-5 h-5" />
-              </motion.div>
+              <RotateCcw className="w-4 sm:w-5 h-4 sm:h-5" />
             </motion.button>
-            <ThemeSwitcher />
+
             <motion.button
               onClick={goNext}
-              whileHover={{ scale: 1.15, backgroundColor: "var(--secondary)" }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="p-2.5 rounded-full hover:bg-secondary transition-colors text-foreground backdrop-blur-sm bg-secondary/30"
+              className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground/80 hover:text-foreground dark:text-white/80 dark:hover:text-white backdrop-blur-sm hover:backdrop-blur-md border border-black/10 dark:border-white/15"
+              style={{
+                backgroundColor: `hsl(${accent})/15`,
+              }}
               title="Next month"
             >
-              <motion.div animate={{ x: [0, 2, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
-                <ChevronRight className="w-5 h-5" />
-              </motion.div>
+              <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
             </motion.button>
           </div>
+
+          <motion.button
+            onClick={toggleDark}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground hover:text-foreground dark:text-white dark:hover:text-white backdrop-blur-sm hover:backdrop-blur-md border border-black/15 dark:border-white/20"
+            style={{
+              backgroundColor: `hsl(${accent})/18`,
+            }}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? <Sun className="w-4 sm:w-5 h-4 sm:h-5" /> : <Moon className="w-4 sm:w-5 h-4 sm:h-5" />}
+          </motion.button>
+
+          <motion.button
+            onClick={() => setNotesOpen((prev) => !prev)}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground dark:text-white backdrop-blur-sm border border-black/15 dark:border-white/20"
+            style={{
+              backgroundColor: `hsl(${accent})/18`,
+            }}
+            title={notesOpen ? "Hide notes" : "Show notes"}
+          >
+            {notesOpen ? <PanelRightClose className="w-4 sm:w-5 h-4 sm:h-5" /> : <PanelRightOpen className="w-4 sm:w-5 h-4 sm:h-5" />}
+          </motion.button>
+
+          <motion.button
+            onClick={() => setNotesCompact((prev) => !prev)}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className="p-2.5 sm:p-3 rounded-xl transition-all text-foreground dark:text-white backdrop-blur-sm border border-black/15 dark:border-white/20"
+            style={{
+              backgroundColor: `hsl(${accent})/18`,
+            }}
+            title={notesCompact ? "Expand notes" : "Compact notes"}
+          >
+            {notesCompact ? <Maximize2 className="w-4 sm:w-5 h-4 sm:h-5" /> : <Minimize2 className="w-4 sm:w-5 h-4 sm:h-5" />}
+          </motion.button>
         </motion.div>
 
         {/* Body */}
-        <div className="flex flex-col lg:flex-row">
+        <div className="flex flex-col lg:flex-row gap-0 flex-1 min-h-0">
           {/* Calendar Grid */}
-          <div className="flex-1 px-4 sm:px-8 py-4 sm:py-6">
+          <div className="flex-1 px-3 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 order-first lg:order-none min-h-0">
             <CalendarGrid
               currentMonth={currentMonth}
               range={range}
@@ -238,60 +349,58 @@ export default function WallCalendar() {
               events={events}
               onSelectDay={handleSelectDay}
               direction={direction}
+              accent={accent}
             />
 
-            {/* Legend */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground font-body"
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary" />
-                Selected
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-calendar-range-bg border border-primary/20" />
-                In range
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="text-sm">🎉</span>
-                Holiday
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-calendar-note" />
-                Note
-              </span>
-            </motion.div>
           </div>
 
-          {/* Notes Sidebar */}
-          <div className="lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-border px-4 sm:px-6 py-4 sm:py-6 bg-secondary/20">
-            <CalendarNotes
-              range={range}
-              notes={notes}
-              onAddNote={handleAddNote}
-              onDeleteNote={handleDeleteNote}
-            />
-            <EventChipInput
-              range={range}
-              events={events}
-              onAddEvent={handleAddEvent}
-              onDeleteEvent={handleDeleteEvent}
-            />
-          </div>
-        </div>
+          {/* Notes Sidebar - Responsive open/close */}
+          <AnimatePresence initial={false}>
+            {notesOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: 24, height: 0 }}
+                animate={{ opacity: 1, x: 0, height: "auto" }}
+                exit={{ opacity: 0, x: 24, height: 0 }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+                className={`border-t lg:border-t-0 lg:border-l border-white/10 dark:border-white/5 px-3 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 bg-white/40 dark:bg-white/5 backdrop-blur-xl lg:overflow-y-auto modern-scrollbar min-h-0 overflow-x-visible ${notesCompact ? "lg:w-72" : "lg:w-80"}`}
+              >
+                <div className="mb-3 p-1 rounded-xl border border-border/60 bg-background/55 backdrop-blur-sm inline-flex gap-1 w-full">
+                  <button
+                    onClick={() => setSidePanelView("notes")}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${sidePanelView === "notes" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}
+                  >
+                    Notes
+                  </button>
+                  <button
+                    onClick={() => setSidePanelView("events")}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${sidePanelView === "events" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}
+                  >
+                    Events
+                  </button>
+                </div>
 
-        {/* Month Memo */}
-        <div className="px-4 sm:px-8 pb-4 sm:pb-6">
-          <MonthMemo currentMonth={currentMonth} />
+                {sidePanelView === "notes" ? (
+                  <CalendarNotes
+                    range={range}
+                    notes={notes}
+                    onAddNote={handleAddNote}
+                    onDeleteNote={handleDeleteNote}
+                    compact={notesCompact}
+                  />
+                ) : (
+                  <EventChipInput
+                    selectedDate={selectedDate}
+                    events={events}
+                    onAddEvent={handleAddEvent}
+                    onDeleteEvent={handleDeleteEvent}
+                    compact={notesCompact}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
-
-      {/* Footer */}
-      <p className="text-center text-xs text-muted-foreground mt-4 font-body">
-        Click a date to start a range · Click another to complete it · All data persists in your browser
-      </p>
     </div>
   );
 }

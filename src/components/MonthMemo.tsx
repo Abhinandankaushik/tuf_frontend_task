@@ -35,21 +35,22 @@ export default function MonthMemo({ currentMonth }: MonthMemoProps) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-4 bg-card border border-border rounded-xl p-4"
+      className="bg-gradient-to-br from-primary/5 to-transparent border border-border rounded-lg p-2 sm:p-3"
     >
-      <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-primary" />
-        <h3 className="font-display text-sm font-semibold text-foreground">
+      <div className="flex items-center gap-1.5 mb-2">
+        <FileText className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-primary flex-shrink-0" />
+        <h3 className="font-display text-xs sm:text-sm font-semibold text-foreground truncate">
           {format(currentMonth, "MMMM")} Notes
         </h3>
       </div>
       <textarea
         value={text}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder={`Write notes for ${format(currentMonth, "MMMM yyyy")}...`}
-        rows={3}
-        className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        placeholder={`Notes for ${format(currentMonth, "MMMM")}...`}
+        rows={2}
+        className="w-full resize-none rounded-lg border border-input bg-card px-2 sm:px-2.5 py-1.5 text-xs font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-sm hover:shadow-md transition-shadow"
       />
+      <p className="text-xs text-muted-foreground mt-1 italic">Auto-saved</p>
     </motion.div>
   );
 }

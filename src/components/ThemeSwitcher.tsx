@@ -84,13 +84,6 @@ export default function ThemeSwitcher() {
                       : "text-foreground hover:bg-secondary/40"
                   }`}
                 >
-                  <motion.span
-                    className="text-xl"
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  >
-                    {t.emoji}
-                  </motion.span>
                   <div className="flex flex-col items-start flex-1">
                     <span>{t.name}</span>
                     <span className="text-xs text-muted-foreground capitalize">

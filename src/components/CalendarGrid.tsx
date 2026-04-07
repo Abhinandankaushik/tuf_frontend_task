@@ -16,24 +16,26 @@ interface CalendarGridProps {
   events: CalendarEvent[];
   onSelectDay: (day: Date) => void;
   direction: number;
+  accent: string;
 }
 
-export default function CalendarGrid({ currentMonth, range, notes, events, onSelectDay, direction }: CalendarGridProps) {
+export default function CalendarGrid({ currentMonth, range, notes, events, onSelectDay, direction, accent }: CalendarGridProps) {
   const days = getCalendarDays(currentMonth);
 
   return (
     <div className="w-full" style={{ perspective: "1200px" }}>
       {/* Weekday headers with bounce animation */}
-      <div className="grid grid-cols-7 gap-1 mb-3">
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2.5 sm:mb-3.5">
         {WEEKDAYS.map((wd, idx) => (
           <motion.div
             key={wd}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05, duration: 0.3 }}
-            className="text-center text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-widest py-3 font-body bg-gradient-to-b from-primary/5 to-transparent rounded-lg"
+            className="text-center text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-[0.14em] py-2 font-body bg-gradient-to-b from-primary/10 to-transparent rounded-lg border border-border/40"
           >
-            {wd}
+            <span className="hidden sm:inline">{wd}</span>
+            <span className="sm:hidden">{wd.slice(0, 1)}</span>
           </motion.div>
         ))}
       </div>
@@ -90,6 +92,7 @@ export default function CalendarGrid({ currentMonth, range, notes, events, onSel
                 notes={notes}
                 events={events}
                 onSelect={onSelectDay}
+                accent={accent}
               />
             </motion.div>
           ))}

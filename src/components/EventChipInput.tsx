@@ -3,24 +3,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X } from "lucide-react";
 import { EVENT_COLORS, type CalendarEvent } from "@/lib/events";
 import { format } from "date-fns";
-import type { DateRange } from "@/lib/calendar-utils";
 
 interface EventChipInputProps {
-  range: DateRange;
+  selectedDate: Date | null;
   events: CalendarEvent[];
   onAddEvent: (event: Omit<CalendarEvent, "id">) => void;
   onDeleteEvent: (id: string) => void;
+  compact?: boolean;
 }
 
-export default function EventChipInput({ range, events, onAddEvent, onDeleteEvent }: EventChipInputProps) {
+export default function EventChipInput({ selectedDate, events, onAddEvent, onDeleteEvent, compact = false }: EventChipInputProps) {
   const [title, setTitle] = useState("");
   const [colorIdx, setColorIdx] = useState(0);
   const [showForm, setShowForm] = useState(false);
 
-  if (!range.start) return null;
+  if (!selectedDate) return null;
 
-  const targetDate = range.end || range.start;
-  const dateStr = format(targetDate, "yyyy-MM-dd");
+  const dateStr = format(selectedDate, "yyyy-MM-dd");
   const dateEvents = events.filter((e) => e.date === dateStr);
 
   const handleAdd = () => {
@@ -31,40 +30,52 @@ export default function EventChipInput({ range, events, onAddEvent, onDeleteEven
   };
 
   return (
-    <div className="mt-3">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-wider">
-          Events · {format(targetDate, "MMM d")}
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`mt-1 border-t border-border/70 ${compact ? "pt-1" : "pt-1.5"}`}>
+      <div className={`sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 flex items-center justify-between ${compact ? "mb-1" : "mb-1.5"}`}>
+        <span className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-wide">
+          Events · {format(selectedDate, "MMM d")}
         </span>
-        <button
+        <motion.button
           onClick={() => setShowForm(!showForm)}
-          className="p-1 rounded-full hover:bg-secondary transition-colors text-primary"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-full hover:bg-secondary transition-colors text-primary touch-target text-xs font-semibold"
+          title="Add event"
         >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
+          <span>Add event</span>
+          <Plus className="w-3 h-3" />
+        </motion.button>
       </div>
 
-      {/* Existing event chips */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
+      <div className={`space-y-1.5 overflow-y-auto modern-scrollbar pr-1 ${compact ? "max-h-24 mb-1" : "max-h-32 mb-1.5"}`}>
         <AnimatePresence>
           {dateEvents.map((ev) => (
-            <motion.span
+            <motion.div
               key={ev.id}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-body font-medium text-white"
-              style={{ backgroundColor: `hsl(${ev.color})` }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="group flex items-start gap-2 rounded-xl border border-border/60 bg-background/75 p-2 shadow-sm hover:shadow-md transition-all"
+              style={{ boxShadow: `inset 3px 0 0 hsl(${ev.color})` }}
             >
-              {ev.title}
-              <button onClick={() => onDeleteEvent(ev.id)} className="hover:opacity-70">
+              <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: `hsl(${ev.color})` }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-foreground font-body font-medium break-words">{ev.title}</p>
+                <p className="text-[11px] text-muted-foreground/90">{ev.date}</p>
+              </div>
+              <motion.button
+                onClick={() => onDeleteEvent(ev.id)}
+                whileHover={{ scale: 1.1 }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1"
+                title="Delete event"
+              >
                 <X className="w-3 h-3" />
-              </button>
-            </motion.span>
+              </motion.button>
+            </motion.div>
           ))}
         </AnimatePresence>
         {dateEvents.length === 0 && !showForm && (
-          <span className="text-xs text-muted-foreground italic font-body">No events</span>
+          <p className="text-xs text-muted-foreground italic">No events for this date.</p>
         )}
       </div>
 
@@ -75,41 +86,47 @@ export default function EventChipInput({ range, events, onAddEvent, onDeleteEven
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
+            className="overflow-hidden px-0.5"
           >
-            <div className="flex gap-1.5 mb-2">
-              {EVENT_COLORS.map((c, i) => (
-                <button
-                  key={c.value}
-                  onClick={() => setColorIdx(i)}
-                  className="w-5 h-5 rounded-full transition-transform border-2"
-                  style={{
-                    backgroundColor: `hsl(${c.value})`,
-                    transform: colorIdx === i ? "scale(1.3)" : "scale(1)",
-                    borderColor: colorIdx === i ? "hsl(var(--foreground))" : "transparent",
-                  }}
-                />
-              ))}
+            <div className="pt-1 pb-1.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Tone</span>
+              <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 backdrop-blur-sm px-1.5 py-1.5 overflow-visible">
+                {EVENT_COLORS.map((c, i) => (
+                  <motion.button
+                    key={c.value}
+                    onClick={() => setColorIdx(i)}
+                    whileHover={{ scale: 1.03 }}
+                    className={`${compact ? "w-4 h-4" : "w-5 h-5"} rounded-full transition-all shrink-0`}
+                    style={{
+                      backgroundColor: `hsl(${c.value})`,
+                      boxShadow: colorIdx === i ? `0 0 0 1.5px hsl(var(--background)), 0 0 0 2.5px hsl(${c.value})` : "none",
+                    }}
+                    title={"Select color"}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className={`flex gap-1.5 ${compact ? "flex-col" : "flex-col sm:flex-row"}`}>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                placeholder="Event title..."
-                className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-xs font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Add event..."
+                className="flex-1 rounded-lg border border-border/70 bg-background/85 px-2.5 py-2 text-xs sm:text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-sm"
               />
               <button
                 onClick={handleAdd}
                 disabled={!title.trim()}
-                className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-body hover:bg-primary/90 disabled:opacity-40"
+                className="rounded-lg bg-primary text-primary-foreground px-2 py-2 text-xs font-body hover:bg-primary/90 disabled:opacity-40 shadow-sm"
               >
                 Add
               </button>
             </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

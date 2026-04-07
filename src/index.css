@@ -131,4 +131,30 @@
   .animate-bounce-smooth {
     animation: bounce-smooth 2s ease-in-out infinite;
   }
+
+  .modern-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.45) transparent;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.55), hsl(var(--accent) / 0.45));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.75), hsl(var(--accent) / 0.65));
+    background-clip: content-box;
+  }
 }
