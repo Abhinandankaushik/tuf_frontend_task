@@ -116,6 +116,10 @@ export default function WallCalendar() {
     handleYearChange(parsedYear);
   }, [currentMonth, handleYearChange, yearInput]);
 
+  const clampYear = useCallback((year: number) => {
+    return Math.min(2100, Math.max(1900, year));
+  }, []);
+
   const handleSelectDay = useCallback((day: Date) => {
     setSelectedDate(day);
     setNotesOpen(true);
@@ -329,15 +333,24 @@ export default function WallCalendar() {
               </label>
               <input
                 id="calendar-year-input"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={1900}
-                max={2100}
+                pattern="[0-9]*"
                 value={yearInput}
                 onChange={(e) => setYearInput(e.target.value)}
                 onKeyDown={(e) => {
+                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const currentValue = Number(yearInput);
+                    const baseYear = Number.isInteger(currentValue) ? currentValue : currentMonth.getFullYear();
+                    const nextYear = clampYear(baseYear + (e.key === "ArrowUp" ? 1 : -1));
+                    setYearInput(String(nextYear));
+                    handleYearChange(nextYear);
+                    return;
+                  }
                   if (e.key === "Enter") applyYearInput();
                 }}
+                onBlur={applyYearInput}
                 className="h-8 sm:h-9 w-20 sm:w-24 rounded-xl border border-black/10 dark:border-white/15 bg-background/80 px-2.5 text-xs sm:text-sm font-semibold text-foreground shadow-inner shadow-black/5 dark:shadow-black/30 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Enter calendar year"
               />
