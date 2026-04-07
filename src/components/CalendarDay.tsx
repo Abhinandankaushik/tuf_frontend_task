@@ -52,7 +52,7 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
       <motion.button
         onClick={() => sameMonth && onSelect(day)}
         className={cn(
-          "relative flex flex-col items-center justify-center rounded-xl p-1.5 sm:p-2 aspect-square transition-all duration-300 font-body text-sm sm:text-base group overflow-hidden backdrop-blur-sm border",
+          "relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 aspect-square min-h-[2.9rem] sm:min-h-[3.6rem] transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden backdrop-blur-sm border",
           !sameMonth && "text-muted-foreground/45 cursor-default border-transparent",
           sameMonth && !inRange && !today && "text-foreground border-border/60 bg-background/45 hover:shadow-md hover:border-primary/35 hover:bg-background/70",
           today && !inRange && "font-bold text-white shadow-lg border-primary/40",
@@ -98,7 +98,7 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
 
         {/* Day number */}
         <motion.span
-          className="relative z-10 font-semibold text-[13px] sm:text-sm rounded-full px-1.5 sm:px-2 py-0.5"
+          className="relative z-10 font-semibold text-[11px] sm:text-sm rounded-full px-1 sm:px-1.5 md:px-2 py-0.5"
           whileHover={sameMonth ? { y: -1 } : {}}
           style={{
             backgroundColor: sameMonth ? "hsl(var(--background) / 0.35)" : "transparent",
@@ -110,7 +110,7 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
         {/* Holiday marker */}
         {holiday && (
           <motion.span
-            className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full z-20"
+            className="absolute top-1 right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full z-20"
             style={{ backgroundColor: `hsl(${accent})` }}
             title={holiday.name}
             animate={{ opacity: [0.8, 1, 0.8] }}
@@ -125,7 +125,7 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
         {/* Note indicator with pulse */}
         {hasNotes && (
           <motion.span
-            className="absolute bottom-1 left-1/2 -translate-x-1/2 w-5 h-1 rounded-full z-10"
+            className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 sm:w-5 h-1 rounded-full z-10"
             style={{ backgroundColor: `hsl(${accent})` }}
             animate={{
               opacity: [0.6, 1, 0.6],
@@ -140,7 +140,7 @@ export default function CalendarDay({ day, currentMonth, range, notes, events, o
 
         {dayEvents.length > 0 && (
           <span
-            className="absolute top-1 left-1 text-[9px] leading-none px-1 py-0.5 rounded-md text-white z-10"
+            className="absolute top-1 left-1 text-[8px] sm:text-[9px] leading-none px-1 py-0.5 rounded-md text-white z-10"
             style={{ backgroundColor: `hsl(${accent})` }}
             title={`${dayEvents.length} events`}
           >

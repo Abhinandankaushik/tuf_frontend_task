@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X } from "lucide-react";
 import { EVENT_COLORS, type CalendarEvent } from "@/lib/events";
@@ -22,6 +22,10 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const dateEvents = events.filter((e) => e.date === dateStr);
 
+  useEffect(() => {
+    setShowForm(false);
+  }, [dateStr]);
+
   const handleAdd = () => {
     if (!title.trim()) return;
     onAddEvent({ date: dateStr, title: title.trim(), color: EVENT_COLORS[colorIdx].value });
@@ -31,7 +35,7 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`mt-1 border-t border-border/70 ${compact ? "pt-1" : "pt-1.5"}`}>
-      <div className={`sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 flex items-center justify-between ${compact ? "mb-1" : "mb-1.5"}`}>
+      <div className={`sticky top-0 z-10 bg-white/60 dark:bg-black/15 backdrop-blur-md rounded-lg border border-border/40 px-2 py-1.5 sm:py-2 flex items-center justify-between ${compact ? "mb-1" : "mb-1.5"}`}>
         <span className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-wide">
           Events · {format(selectedDate, "MMM d")}
         </span>
@@ -39,15 +43,14 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
           onClick={() => setShowForm(!showForm)}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-full hover:bg-secondary transition-colors text-primary touch-target text-xs font-semibold"
+          className="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-secondary transition-colors text-primary touch-target"
           title="Add event"
         >
-          <span>Add event</span>
-          <Plus className="w-3 h-3" />
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </motion.button>
       </div>
 
-      <div className={`space-y-1.5 overflow-y-auto modern-scrollbar pr-1 ${compact ? "max-h-24 mb-1" : "max-h-32 mb-1.5"}`}>
+      <div className={`space-y-1.5 overflow-y-auto modern-scrollbar pr-1 ${compact ? "max-h-36 sm:max-h-40 mb-1" : "max-h-44 sm:max-h-56 mb-1.5"}`}>
         <AnimatePresence>
           {dateEvents.map((ev) => (
             <motion.div
@@ -66,10 +69,10 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
               <motion.button
                 onClick={() => onDeleteEvent(ev.id)}
                 whileHover={{ scale: 1.1 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1"
+                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1 touch-target"
                 title="Delete event"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </motion.button>
             </motion.div>
           ))}

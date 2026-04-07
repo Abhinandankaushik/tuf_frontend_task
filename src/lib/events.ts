@@ -1,3 +1,5 @@
+import { getHolidaysForMonth } from "@/lib/holidays";
+
 export interface CalendarEvent {
   id: string;
   date: string; // yyyy-MM-dd
@@ -8,6 +10,7 @@ export interface CalendarEvent {
 const STORAGE_KEY = "calendar-events";
 const MONTH_CACHE_PREFIX = "calendar-events-month-cache";
 const API_BASE = "https://date.nager.at/api/v3/PublicHolidays";
+const COUNTRY_CODE = "IN";
 
 export function loadEvents(): CalendarEvent[] {
   try {
@@ -32,17 +35,6 @@ function getMonthKey(monthDate: Date): string {
   return `${year}-${month}`;
 }
 
-function detectCountryCode(): string {
-  try {
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    const region = locale.split("-").pop()?.toUpperCase();
-    if (region && /^[A-Z]{2}$/.test(region)) return region;
-  } catch {
-    // ignore locale detection failure
-  }
-  return "IN";
-}
-
 function hashToColorIndex(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -64,7 +56,7 @@ function mapHolidayToEvent(holiday: { date: string; localName?: string; name: st
 
 export async function fetchEventsForMonth(monthDate: Date): Promise<CalendarEvent[]> {
   const monthKey = getMonthKey(monthDate);
-  const cacheKey = `${MONTH_CACHE_PREFIX}-${monthKey}`;
+  const cacheKey = `${MONTH_CACHE_PREFIX}-${COUNTRY_CODE}-${monthKey}`;
 
   try {
     const cached = localStorage.getItem(cacheKey);
@@ -80,7 +72,20 @@ export async function fetchEventsForMonth(monthDate: Date): Promise<CalendarEven
 
   const year = monthDate.getFullYear();
   const monthNumber = monthDate.getMonth() + 1;
-  const countryCode = detectCountryCode();
+  const countryCode = COUNTRY_CODE;
+
+  const localIndianFestivalEvents = getHolidaysForMonth(monthDate.getMonth())
+    .filter((entry) => entry.holiday.type === "indian")
+    .map(({ day, holiday }) => {
+      const date = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const color = EVENT_COLORS[hashToColorIndex(holiday.name)].value;
+      return {
+        id: `indian-fixed-${date}-${holiday.name}`,
+        date,
+        title: holiday.name,
+        color,
+      };
+    });
 
   try {
     const response = await fetch(`${API_BASE}/${year}/${countryCode}`);
@@ -94,12 +99,13 @@ export async function fetchEventsForMonth(monthDate: Date): Promise<CalendarEven
       .filter((h) => Number(h.date.split("-")[1]) === monthNumber)
       .map((h) => mapHolidayToEvent(h, countryCode));
 
-    const merged = mergeUniqueEvents(monthUserEvents, monthApiEvents);
+    const merged = mergeUniqueEvents(monthUserEvents, mergeUniqueEvents(monthApiEvents, localIndianFestivalEvents));
     localStorage.setItem(cacheKey, JSON.stringify(merged));
     return merged;
   } catch {
-    localStorage.setItem(cacheKey, JSON.stringify(monthUserEvents));
-    return monthUserEvents;
+    const fallbackMerged = mergeUniqueEvents(monthUserEvents, localIndianFestivalEvents);
+    localStorage.setItem(cacheKey, JSON.stringify(fallbackMerged));
+    return fallbackMerged;
   }
 }
 
