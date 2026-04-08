@@ -15,15 +15,15 @@ export default function EventChipInput({ selectedDate, events, onAddEvent, onDel
   const [title, setTitle] = useState("");
   const [colorIdx, setColorIdx] = useState(0);
   const [showForm, setShowForm] = useState(false);
-
-  if (!selectedDate) return null;
-
-  const dateStr = format(selectedDate, "yyyy-MM-dd");
+  const dateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
   const dateEvents = events.filter((e) => e.date === dateStr);
 
   useEffect(() => {
+    if (!dateStr) return;
     setShowForm(false);
   }, [dateStr]);
+
+  if (!selectedDate) return null;
 
   const handleAdd = () => {
     if (!title.trim()) return;

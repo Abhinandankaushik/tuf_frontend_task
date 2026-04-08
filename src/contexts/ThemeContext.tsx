@@ -27,20 +27,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
 
-  useEffect(() => {
-    localStorage.setItem("theme-id", themeId);
-  }, [themeId]);
-
-  useEffect(() => {
-    localStorage.setItem("theme-dark", JSON.stringify(isDark));
-    applyTheme(theme, isDark);
-  }, [isDark, theme]);
-
-  useEffect(() => {
-    applyTheme(theme, isDark);
-  }, [theme, isDark]);
-
-  const applyTheme = (selectedTheme: CalendarTheme, dark: boolean) => {
+  function applyTheme(selectedTheme: CalendarTheme, dark: boolean) {
     const modeColors = dark ? selectedTheme.dark : selectedTheme.light;
     const root = document.documentElement;
 
@@ -54,7 +41,20 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } else {
       document.documentElement.classList.remove("dark");
     }
-  };
+  }
+
+  useEffect(() => {
+    localStorage.setItem("theme-id", themeId);
+  }, [themeId]);
+
+  useEffect(() => {
+    localStorage.setItem("theme-dark", JSON.stringify(isDark));
+    applyTheme(theme, isDark);
+  }, [isDark, theme]);
+
+  useEffect(() => {
+    applyTheme(theme, isDark);
+  }, [theme, isDark]);
 
   const handleSetThemeId = (id: string) => {
     setThemeId(id);
@@ -93,5 +93,3 @@ export const useTheme = (): ThemeContextType => {
   }
   return context;
 };
-
-export { THEMES };

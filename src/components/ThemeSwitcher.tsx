@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Palette } from "lucide-react";
-import { useTheme, THEMES } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { THEMES } from "@/lib/themes";
 import { useState } from "react";
 
 export default function ThemeSwitcher() {
