@@ -46,6 +46,7 @@ function shiftAccent(accent: string, satDelta: number, lightDelta: number): stri
 
 export default function WallCalendar() {
   const { isDark, toggleDark } = useTheme();
+  const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
@@ -314,7 +315,7 @@ export default function WallCalendar() {
               {format(currentMonth, "MMMM")}
             </h2>
             <p className="text-xs sm:text-sm text-white/70 mt-1 font-body">
-              {format(currentMonth, "EEEE, d MMM")}
+              {`Today: ${format(today, "EEEE, d MMMM")}`}
             </p>
           </motion.div>
 
@@ -323,10 +324,11 @@ export default function WallCalendar() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-30 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold text-white backdrop-blur-sm border"
+            className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-40 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold text-white border backdrop-blur-md shadow-lg"
             style={{
-              backgroundColor: `hsl(${accent})/70`,
-              borderColor: `hsl(${accent})/90`,
+              backgroundColor: "rgba(0, 0, 0, 0.62)",
+              borderColor: "rgba(255, 255, 255, 0.6)",
+              textShadow: "0 1px 2px rgba(0, 0, 0, 0.65)",
             }}
           >
             {format(currentMonth, "yyyy")}
