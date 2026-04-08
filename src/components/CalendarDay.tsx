@@ -63,11 +63,11 @@ export default function CalendarDay({ day, currentMonth, range, hoveredDate, not
         onMouseLeave={() => onHover(null)}
         onBlur={() => onHover(null)}
         className={cn(
-          "relative w-full h-[clamp(2.4rem,8.2vw,3.9rem)] sm:h-[clamp(2.9rem,7.2vw,4.4rem)] md:h-[clamp(3.2rem,6.2vw,4.8rem)] flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden backdrop-blur-sm border",
+          "relative w-full h-[clamp(2.4rem,8.2vw,3.9rem)] sm:h-[clamp(2.9rem,7.2vw,4.4rem)] md:h-[clamp(3.2rem,6.2vw,4.8rem)] flex flex-col items-center justify-center rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 transition-all duration-300 font-body text-xs sm:text-sm md:text-base group overflow-hidden border",
           !sameMonth && "text-muted-foreground/45 cursor-default border-transparent",
           sameMonth && !inRange && !today && "text-foreground border-border/60 bg-background/45 hover:shadow-md hover:border-primary/35 hover:bg-background/70",
           today && !inRange && "font-bold text-white shadow-lg border-primary/40",
-          inRange && !rangeStart && !rangeEnd && "bg-white/30 dark:bg-white/10 text-foreground border-primary/25 backdrop-blur-sm",
+          inRange && !rangeStart && !rangeEnd && "bg-white/30 dark:bg-white/10 text-foreground border-primary/25",
           previewRange && !inRange && !rangeStart && !rangeEnd && "bg-primary/10 border-primary/20",
           (rangeStart || rangeEnd) && "text-white shadow-xl font-semibold",
           rangeStart && range.end && !isSameDay(range.start as Date, range.end as Date) && "rounded-r-md sm:rounded-r-lg",

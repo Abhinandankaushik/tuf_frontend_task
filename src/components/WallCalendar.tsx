@@ -222,7 +222,20 @@ export default function WallCalendar() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-transparent backdrop-blur-xl rounded-3xl sm:rounded-4xl shadow-2xl overflow-hidden border border-white/10 dark:border-white/5 h-full flex flex-col"
+        className="bg-transparent backdrop-blur-none rounded-3xl sm:rounded-4xl overflow-hidden border border-white/10 dark:border-white/5 h-full flex flex-col"
+        style={{
+          borderRadius: "24px",
+
+          boxShadow: `
+    0 12px 24px rgba(0, 0, 0, 0.25),
+    0 6px 12px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2)
+  `,
+
+          transform: "none",
+        }}
       >
         {/* Premium Hero Image Section */}
         <div
@@ -231,7 +244,7 @@ export default function WallCalendar() {
           onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
         >
           {/* Fallback gradient layer - themed accent */}
-          <div 
+          <div
             className="absolute inset-0 z-0"
             style={{
               background: `radial-gradient(120% 80% at 15% 15%, hsl(${accent}) 0%, transparent 55%), radial-gradient(100% 90% at 85% 75%, hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 12, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 10, 95)}%) 0%, transparent 58%), linear-gradient(135deg, hsl(${accent}), hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 20, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 15, 95)}%))`,
@@ -261,9 +274,9 @@ export default function WallCalendar() {
 
           {/* Premium Dark Gradient Overlay - Light top to darker bottom */}
           <div className="absolute inset-0 z-20 bg-gradient-to-b from-white/25 via-black/12 to-black/45 dark:from-black/10 dark:via-black/20 dark:to-black/50" />
-          
+
           {/* Accent Color Enhancement - subtle glow */}
-          <div 
+          <div
             className="absolute inset-0 z-15 opacity-30 pointer-events-none mix-blend-soft-light"
             style={{
               background: `radial-gradient(ellipse at center, transparent 0%, hsl(${accent})/30 100%)`,
@@ -305,7 +318,7 @@ export default function WallCalendar() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 px-2.5 sm:px-5 md:px-8 py-3 sm:py-4 md:py-5 border-b border-white/5 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-sm"
+          className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 px-2.5 sm:px-5 md:px-8 py-3 sm:py-4 md:py-5 border-b border-white/5 dark:border-white/10 bg-white/12 dark:bg-black/20"
         >
           {/* Navigation buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-center sm:justify-start">
@@ -447,7 +460,7 @@ export default function WallCalendar() {
                 animate={{ opacity: 1, x: 0, height: "auto" }}
                 exit={{ opacity: 0, x: 24, height: 0 }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
-                className="border-t lg:border-t-0 lg:border-l border-white/10 dark:border-white/5 px-2.5 sm:px-5 md:px-8 py-3 sm:py-5 md:py-6 bg-white/40 dark:bg-white/5 backdrop-blur-xl min-h-0 overflow-x-visible w-full lg:w-80"
+                className="border-t lg:border-t-0 lg:border-l border-white/10 dark:border-white/5 px-2.5 sm:px-5 md:px-8 py-3 sm:py-5 md:py-6 bg-white/12 dark:bg-black/20 min-h-0 overflow-x-visible w-full lg:w-80"
               >
                 <div className="mb-3 p-1 rounded-xl border border-border/60 bg-background/55 backdrop-blur-sm inline-flex gap-1 w-full">
                   <button
