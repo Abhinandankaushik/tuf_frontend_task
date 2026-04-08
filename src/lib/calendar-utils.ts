@@ -25,6 +25,14 @@ export interface CalendarNotesStore {
 
 export type NoteMode = "month" | "date" | "range";
 
+export const YEAR_MIN = 1900;
+export const YEAR_MAX = 2100;
+
+const STORAGE_KEYS = {
+  notes: "calendar-notes",
+  notesFlat: "calendar-notes-flat",
+} as const;
+
 export function getCalendarDays(month: Date): Date[] {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
   // Use a stable 5-row calendar (35 cells) to keep the layout compact and avoid vertical overflow.
@@ -80,7 +88,7 @@ export function isInPreviewRange(day: Date, start: Date | null, hover: Date | nu
 
 export const MONTH_IMAGES: Record<number, string> = {};
 
-interface StoredNoteItem {
+export interface StoredNoteItem {
   text: string;
   color: string;
   sourceRange?: string;
@@ -101,7 +109,7 @@ function parseDateKeyToLocalDate(key: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function parseStoredNoteItems(value: string | undefined): StoredNoteItem[] {
+export function parseStoredNoteItems(value: string | undefined): StoredNoteItem[] {
   if (!value || !value.trim()) return [];
 
   try {
@@ -126,7 +134,7 @@ function parseStoredNoteItems(value: string | undefined): StoredNoteItem[] {
     .map((text) => ({ text, color: "16 60% 48%" }));
 }
 
-function stringifyStoredNoteItems(items: StoredNoteItem[]): string {
+export function stringifyStoredNoteItems(items: StoredNoteItem[]): string {
   if (!items.length) return "";
   return JSON.stringify(items.map((item) => ({
     text: item.text,
@@ -137,7 +145,7 @@ function stringifyStoredNoteItems(items: StoredNoteItem[]): string {
 
 export function loadNotes(): CalendarNotesStore {
   try {
-    const saved = localStorage.getItem("calendar-notes");
+    const saved = localStorage.getItem(STORAGE_KEYS.notes);
     const baseline = defaultNotesStore();
 
     if (saved) {
@@ -158,7 +166,7 @@ export function loadNotes(): CalendarNotesStore {
     }
 
     // Read flat format: "dd/MM/yyyy - note"
-    const flatRaw = localStorage.getItem("calendar-notes-flat");
+    const flatRaw = localStorage.getItem(STORAGE_KEYS.notesFlat);
     if (flatRaw) {
       try {
         const flatEntries = JSON.parse(flatRaw);
@@ -190,7 +198,7 @@ export function loadNotes(): CalendarNotesStore {
 }
 
 export function saveNotes(notes: CalendarNotesStore): void {
-  localStorage.setItem("calendar-notes", JSON.stringify(notes));
+  localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(notes));
 
   // Mirror date-wise entries in requested format: dd/MM/yyyy - note.
   const flatEntries: string[] = [];
@@ -204,7 +212,7 @@ export function saveNotes(notes: CalendarNotesStore): void {
       flatEntries.push(`${printableDate} - ${item.text}`);
     }
   }
-  localStorage.setItem("calendar-notes-flat", JSON.stringify(flatEntries));
+  localStorage.setItem(STORAGE_KEYS.notesFlat, JSON.stringify(flatEntries));
 }
 
 export function getNoteForSelection(notes: CalendarNotesStore, currentMonth: Date, range: DateRange): {

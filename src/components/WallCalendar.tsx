@@ -14,6 +14,8 @@ import {
   loadNotes,
   saveNotes,
   saveNoteForSelection,
+  YEAR_MIN,
+  YEAR_MAX,
   type DateRange,
   type CalendarNotesStore,
   type NoteMode,
@@ -24,6 +26,22 @@ const ALL_ACCENTS = THEMES.flatMap((t) => t.accents);
 
 function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function parseAccent(accent: string): { hue: number; sat: number; light: number } {
+  const [h, s, l] = accent.split(" ");
+  return {
+    hue: Number.parseInt(h, 10) || 220,
+    sat: Number.parseInt(s, 10) || 70,
+    light: Number.parseInt(l, 10) || 56,
+  };
+}
+
+function shiftAccent(accent: string, satDelta: number, lightDelta: number): string {
+  const { hue, sat, light } = parseAccent(accent);
+  const nextSat = Math.max(0, Math.min(100, sat + satDelta));
+  const nextLight = Math.max(0, Math.min(95, light + lightDelta));
+  return `${hue} ${nextSat}% ${nextLight}%`;
 }
 
 export default function WallCalendar() {
@@ -43,6 +61,8 @@ export default function WallCalendar() {
   const [notesOpen, setNotesOpen] = useState(true);
   const [sidePanelView, setSidePanelView] = useState<"notes" | "events">("notes");
   const [yearInput, setYearInput] = useState(() => String(new Date().getFullYear()));
+  const accentShiftSoft = shiftAccent(accent, -12, 10);
+  const accentShiftStrong = shiftAccent(accent, -20, 15);
 
   // Pick a new random hero image + accent whenever month changes.
   useEffect(() => {
@@ -117,7 +137,7 @@ export default function WallCalendar() {
 
   const applyYearInput = useCallback(() => {
     const parsedYear = Number(yearInput);
-    if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2100) {
+    if (!Number.isInteger(parsedYear) || parsedYear < YEAR_MIN || parsedYear > YEAR_MAX) {
       setYearInput(String(currentMonth.getFullYear()));
       return;
     }
@@ -125,7 +145,7 @@ export default function WallCalendar() {
   }, [currentMonth, handleYearChange, yearInput]);
 
   const clampYear = useCallback((year: number) => {
-    return Math.min(2100, Math.max(1900, year));
+    return Math.min(YEAR_MAX, Math.max(YEAR_MIN, year));
   }, []);
 
   const handleSelectDay = useCallback((day: Date, isDoubleClick = false) => {
@@ -247,7 +267,7 @@ export default function WallCalendar() {
           <div
             className="absolute inset-0 z-0"
             style={{
-              background: `radial-gradient(120% 80% at 15% 15%, hsl(${accent}) 0%, transparent 55%), radial-gradient(100% 90% at 85% 75%, hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 12, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 10, 95)}%) 0%, transparent 58%), linear-gradient(135deg, hsl(${accent}), hsl(${accent.split(' ')[0]} ${Math.max(parseInt(accent.split(' ')[1]) - 20, 0)}% ${Math.min(parseInt(accent.split(' ')[2]) + 15, 95)}%))`,
+              background: `radial-gradient(120% 80% at 15% 15%, hsl(${accent}) 0%, transparent 55%), radial-gradient(100% 90% at 85% 75%, hsl(${accentShiftSoft}) 0%, transparent 58%), linear-gradient(135deg, hsl(${accent}), hsl(${accentShiftStrong}))`,
             }}
           />
 

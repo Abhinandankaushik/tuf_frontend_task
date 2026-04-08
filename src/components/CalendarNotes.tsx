@@ -9,6 +9,8 @@ import {
   type NoteMode,
   getNoteForSelection,
   normalizeRange,
+  parseStoredNoteItems,
+  stringifyStoredNoteItems,
 } from "@/lib/calendar-utils";
 
 interface CalendarNotesProps {
@@ -16,11 +18,6 @@ interface CalendarNotesProps {
   range: DateRange;
   notes: CalendarNotesStore;
   onSaveNote: (mode: NoteMode, key: string, text: string) => void;
-}
-
-interface NoteItem {
-  text: string;
-  color: string;
 }
 
 export default function CalendarNotes({ currentMonth, range, notes, onSaveNote }: CalendarNotesProps) {
@@ -31,30 +28,13 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote }
   const [draft, setDraft] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [colorIdx, setColorIdx] = useState(0);
-  const savedNotes = useMemo<NoteItem[]>(() => {
-    const raw = selection.text?.trim();
-    if (!raw) return [];
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .map((item) => ({
-            text: String(item?.text ?? "").trim(),
-            color: String(item?.color ?? EVENT_COLORS[0].value),
-          }))
-          .filter((item) => item.text.length > 0);
-      }
-    } catch {
-      // Legacy plain-text note format fallback.
-    }
-
-    return raw
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((text) => ({ text, color: EVENT_COLORS[0].value }));
-  }, [selection.text]);
+  const savedNotes = useMemo(
+    () => parseStoredNoteItems(selection.text).map((item) => ({
+      text: item.text,
+      color: item.color || EVENT_COLORS[0].value,
+    })),
+    [selection.text],
+  );
 
   useEffect(() => {
     setDraft("");
@@ -70,8 +50,8 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote }
 
   const handleSave = () => {
     if (!draft.trim()) return;
-    const next: NoteItem[] = [...savedNotes, { text: draft.trim(), color: EVENT_COLORS[colorIdx].value }];
-    onSaveNote(selection.mode, selection.key, JSON.stringify(next));
+    const next = [...savedNotes, { text: draft.trim(), color: EVENT_COLORS[colorIdx].value }];
+    onSaveNote(selection.mode, selection.key, stringifyStoredNoteItems(next));
     setDraft("");
     setColorIdx(0);
     setShowForm(false);
@@ -79,7 +59,7 @@ export default function CalendarNotes({ currentMonth, range, notes, onSaveNote }
 
   const handleDeleteNoteAt = (index: number) => {
     const next = savedNotes.filter((_, i) => i !== index);
-    onSaveNote(selection.mode, selection.key, next.length ? JSON.stringify(next) : "");
+    onSaveNote(selection.mode, selection.key, next.length ? stringifyStoredNoteItems(next) : "");
   };
 
   return (

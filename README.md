@@ -9,7 +9,7 @@
 Modern, animated, responsive wall calendar built with React + TypeScript + Tailwind.
 
 It supports:
-- month navigation with cinematic page-flip effects
+- month navigation with smooth slide + fade transitions
 - single-date and range-based note management
 - tone-colored notes/events
 - event fetching + local cache
@@ -130,14 +130,14 @@ Range notes are expanded and mirrored across each date in that range so clicking
 ## Events Data Flow
 
 1. Events load from `localStorage`.
-2. Month events fetch from public holiday API + local holiday sources.
+2. Month events fetch from Nager.Date public holiday API (`IN`) + local holiday sources.
 3. Data is merged and deduplicated.
 4. Month cache is stored for faster reloads.
 
 ## Features Implemented
 
-- Animated month transitions (page-flip style)
-- Fixed/compact grid behavior tuning
+- Animated month transitions (slide + fade style)
+- Fixed compact 5-row grid behavior (35 cells)
 - Date selection + double-click-triggered range mode
 - Month/Date/Range notes context
 - Multiple notes per context
@@ -147,6 +147,7 @@ Range notes are expanded and mirrored across each date in that range so clicking
 - Responsive layout (mobile + desktop)
 - Light and dark theme support
 - Background motion effects (time-travel inspired)
+- Neo-glass inspired date cards with state-aware styling
 
 ## Folder Guide
 
